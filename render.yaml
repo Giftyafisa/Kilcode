@@ -1,0 +1,47 @@
+services:
+  # Backend Service
+  - type: web
+    name: kilcode-api
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: DOMAIN
+        value: kilcode.duckdns.org
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: kilcode-frontend
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://kilcode-api.onrender.com
+      - key: NODE_VERSION
+        value: 18.17.0
+
+  # Admin Service
+  - type: web
+    name: kilcode-admin
+    env: node
+    rootDir: admin
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://kilcode-api.onrender.com
+      - key: NODE_VERSION
+        value: 18.17.0 

@@ -1,0 +1,118 @@
+openapi: 3.0.0
+info:
+  title: Kilcode API
+  version: 1.0.0
+  description: API documentation for Kilcode betting platform
+
+servers:
+  - url: https://api.kilcode.com/v1
+    description: Production server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [INVALID_CODE, PAYMENT_FAILED, INSUFFICIENT_BALANCE, INVALID_AMOUNT]
+        message:
+          type: string
+        country:
+          type: string
+          enum: [nigeria, ghana]
+
+paths:
+  /betting-codes/submit:
+    post:
+      tags: [Betting]
+      summary: Submit a betting code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookmaker:
+                  type: string
+                  enum:
+                    # Nigeria
+                    - bet9ja
+                    - sportybet
+                    - 1xbet
+                    # Ghana
+                    - betway
+                    - betpawa
+                code:
+                  type: string
+                odds:
+                  type: number
+                  minimum: 1.0
+                stake:
+                  type: number
+                  minimum: 0
+              required:
+                - bookmaker
+                - code
+                - odds
+                - stake
+      responses:
+        '201':
+          description: Betting code submitted successfully
+        '400':
+          description: Invalid betting code or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payments/{country}/initialize:
+    post:
+      tags: [Payments]
+      summary: Initialize payment based on country
+      parameters:
+        - in: path
+          name: country
+          required: true
+          schema:
+            type: string
+            enum: [nigeria, ghana]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  minimum: 0
+                method:
+                  type: string
+                  enum:
+                    # Nigeria
+                    - paystack
+                    - bank_transfer
+                    # Ghana
+                    - mtn_momo
+                    - vodafone_cash
+                phone:
+                  type: string
+                  description: Required for mobile money payments
+                email:
+                  type: string
+                  description: Required for card payments
+              required:
+                - amount
+                - method 

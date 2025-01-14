@@ -1,0 +1,39 @@
+{
+  "name": "kilcode-admin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:analyzer": "vite --config vite.code-analyzer.config.js",
+    "build": "vite build",
+    "build:analyzer": "vite build --config vite.code-analyzer.config.js",
+    "preview": "vite preview",
+    "preview:analyzer": "vite preview --config vite.code-analyzer.config.js",
+    "start:analyzer": "npm run dev:analyzer"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "framer-motion": "^11.14.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-icons": "^4.12.0",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.67",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "vite": "^5.4.11"
+  },
+  "$schema": "https://json.schemastore.org/package.json",
+  "main": "vite.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Kilcode Admin Dashboard"
+}
