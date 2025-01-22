@@ -11,10 +11,10 @@ def run_server(command):
 
 def main():
     # Get the port from Render's environment variable
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8002))
     
-    # Run only the main server as Render expects a single service
-    command = f"python -m uvicorn app.main:app --host 0.0.0.0 --port {port}"
+    # Run the payment admin server
+    command = f"python payment_admin_server.py --port {port}"
     run_server(command)
 
 if __name__ == "__main__":
