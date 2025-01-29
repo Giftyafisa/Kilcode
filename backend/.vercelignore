@@ -1,0 +1,17 @@
+.git
+.env
+__pycache__
+*.pyc
+node_modules
+venv
+.venv
+env
+*.log
+*.db
+test_*
+*.test.*
+*.spec.*
+docs/
+tests/
+examples/
+postgresql.exe 

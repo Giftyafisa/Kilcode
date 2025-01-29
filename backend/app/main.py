@@ -20,6 +20,7 @@ app = FastAPI(
 
 # Update CORS middleware configuration
 origins = [
+    "https://kilcode-frontend-55rtit4d8-giftyafisas-projects.vercel.app",
     "https://kilcode-frontend.vercel.app",
     "https://kilcode.vercel.app",
     "http://localhost:5173",
@@ -75,4 +76,12 @@ async def health_check():
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT
-    } 
+    }
+
+@app.get("/api/v1/health")
+async def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
