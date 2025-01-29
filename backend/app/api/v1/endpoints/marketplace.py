@@ -34,6 +34,7 @@ async def get_marketplace_status() -> Dict:
             "version": "1.0.0"
         }
     except Exception as e:
+        logger.error(f"Error in get_marketplace_status: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/codes")
@@ -52,98 +53,107 @@ async def get_marketplace_codes(
         
         # Validate country
         country = country.lower()
-        country_config = get_country_config(country)
-        if not country_config:
-            logger.error(f"Invalid country: {country}")
-            raise HTTPException(status_code=400, detail="Invalid country")
+        try:
+            country_config = get_country_config(country)
+            if not country_config:
+                logger.error(f"Invalid country: {country}")
+                raise HTTPException(status_code=400, detail="Invalid country")
+        except ValueError as e:
+            logger.error(f"Error validating country: {str(e)}")
+            raise HTTPException(status_code=400, detail=str(e))
 
         # Calculate offset
         offset = (page - 1) * limit
         logger.info(f"Calculated offset: {offset}")
 
-        # Build base query for public codes only
-        query = db.query(BettingCode).filter(
-            BettingCode.is_in_marketplace == True,
-            BettingCode.is_published == True,
-            BettingCode.user_country == country,
-            BettingCode.marketplace_status == 'active'  # Only show active codes
-        )
-        
-        logger.info("Base query built with filters")
-
-        # Apply sorting
-        if sort_by == "popularity":
-            # Calculate popularity score based on purchases and ratings only
-            query = (
-                db.query(
-                    BettingCode,
-                    (func.count(CodePurchase.id) * 0.7 +  # 70% weight for purchases
-                     func.coalesce(func.avg(CodeRating.rating), 0) * 0.3  # 30% weight for ratings
-                    ).label('popularity_score')
-                )
-                .outerjoin(CodePurchase, CodePurchase.code_id == BettingCode.id)
-                .outerjoin(CodeRating, CodeRating.code_id == BettingCode.id)
-                .filter(
-                    BettingCode.is_in_marketplace == True,
-                    BettingCode.is_published == True,
-                    BettingCode.user_country == country,
-                    BettingCode.marketplace_status == 'active'  # Only show active codes
-                )
-                .group_by(BettingCode.id)
-                .order_by(text('popularity_score DESC'))
+        try:
+            # Build base query for public codes only
+            query = db.query(BettingCode).filter(
+                BettingCode.is_in_marketplace == True,
+                BettingCode.is_published == True,
+                BettingCode.user_country == country,
+                BettingCode.marketplace_status == 'active'  # Only show active codes
             )
-            logger.info("Applied popularity sorting")
-        elif sort_by == "date":
-            query = query.order_by(BettingCode.created_at.desc())
-            logger.info("Applied date sorting")
-        elif sort_by == "price":
-            query = query.order_by(BettingCode.price.asc())
-            logger.info("Applied price sorting")
-
-        # Get total count and results
-        if sort_by == "popularity":
-            # For popularity sort, we already have the query with joins
-            total_count = query.count()
-            codes = query.offset(offset).limit(limit).all()
-            codes = [code[0] for code in codes]  # Extract BettingCode from result tuple
-        else:
-            # For other sorts, use the simple query
-            total_count = query.count()
-            codes = query.offset(offset).limit(limit).all()
             
-        logger.info(f"Found {total_count} total codes")
-        logger.info(f"Returning {len(codes)} codes for current page")
+            logger.info("Base query built with filters")
 
-        # Convert to dict and filter sensitive data
-        codes_data = [{
-            'id': code.id,
-            'bookmaker': code.bookmaker,
-            'title': code.title,
-            'description': code.description,
-            'price': code.price,
-            'win_probability': code.win_probability,
-            'expected_odds': code.expected_odds,
-            'min_stake': code.min_stake,
-            'category': code.category,
-            'marketplace_status': code.marketplace_status,
-            'valid_until': code.valid_until.isoformat() if code.valid_until else None,
-            'created_at': code.created_at.isoformat() if code.created_at else None
-        } for code in codes]
+            # Apply sorting
+            if sort_by == "popularity":
+                # Calculate popularity score based on purchases and ratings only
+                query = (
+                    db.query(
+                        BettingCode,
+                        (func.count(CodePurchase.id) * 0.7 +  # 70% weight for purchases
+                         func.coalesce(func.avg(CodeRating.rating), 0) * 0.3  # 30% weight for ratings
+                        ).label('popularity_score')
+                    )
+                    .outerjoin(CodePurchase, CodePurchase.code_id == BettingCode.id)
+                    .outerjoin(CodeRating, CodeRating.code_id == BettingCode.id)
+                    .filter(
+                        BettingCode.is_in_marketplace == True,
+                        BettingCode.is_published == True,
+                        BettingCode.user_country == country,
+                        BettingCode.marketplace_status == 'active'  # Only show active codes
+                    )
+                    .group_by(BettingCode.id)
+                    .order_by(text('popularity_score DESC'))
+                )
+                logger.info("Applied popularity sorting")
+            elif sort_by == "date":
+                query = query.order_by(BettingCode.created_at.desc())
+                logger.info("Applied date sorting")
+            elif sort_by == "price":
+                query = query.order_by(BettingCode.price.asc())
+                logger.info("Applied price sorting")
 
-        response_data = {
-            "success": True,
-            "data": {
-                "codes": codes_data,
-                "total": total_count,
-                "page": page,
-                "limit": limit,
-                "total_pages": (total_count + limit - 1) // limit
+            # Get total count and results
+            if sort_by == "popularity":
+                # For popularity sort, we already have the query with joins
+                total_count = query.count()
+                codes = query.offset(offset).limit(limit).all()
+                codes = [code[0] for code in codes]  # Extract BettingCode from result tuple
+            else:
+                # For other sorts, use the simple query
+                total_count = query.count()
+                codes = query.offset(offset).limit(limit).all()
+                
+            logger.info(f"Found {total_count} total codes")
+            logger.info(f"Returning {len(codes)} codes for current page")
+
+            # Convert to dict and filter sensitive data
+            codes_data = [{
+                'id': code.id,
+                'bookmaker': code.bookmaker,
+                'title': code.title,
+                'description': code.description,
+                'price': code.price,
+                'win_probability': code.win_probability,
+                'expected_odds': code.expected_odds,
+                'min_stake': code.min_stake,
+                'category': code.category,
+                'marketplace_status': code.marketplace_status,
+                'valid_until': code.valid_until.isoformat() if code.valid_until else None,
+                'created_at': code.created_at.isoformat() if code.created_at else None
+            } for code in codes]
+
+            response_data = {
+                "success": True,
+                "data": {
+                    "codes": codes_data,
+                    "total": total_count,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": (total_count + limit - 1) // limit
+                }
             }
-        }
-        
-        logger.info(f"Successfully prepared response with {len(codes_data)} codes")
-        return response_data
-        
+            
+            logger.info(f"Successfully prepared response with {len(codes_data)} codes")
+            return response_data
+            
+        except Exception as e:
+            logger.error(f"Database error in get_marketplace_codes: {str(e)}")
+            raise HTTPException(status_code=500, detail="Error accessing database")
+            
     except HTTPException as e:
         logger.error(f"HTTP Exception in get_marketplace_codes: {str(e)}")
         raise e
