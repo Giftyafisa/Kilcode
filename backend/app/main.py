@@ -20,6 +20,8 @@ app = FastAPI(
 
 # Update CORS middleware configuration
 origins = [
+    "https://kilcode-app.vercel.app",  # New frontend domain
+    "https://kilcode-frontend-ng1ah21t9-giftyafisas-projects.vercel.app",  # Latest deployment
     "https://kilcode-frontend-55rtit4d8-giftyafisas-projects.vercel.app",
     "https://kilcode-frontend.vercel.app",
     "https://kilcode.vercel.app",
@@ -32,8 +34,7 @@ origins = [
     "http://gh-kilcode.duckdns.org",
     "http://localhost",
     "http://localhost:8000",
-    "https://localhost:8000",
-    "*"  # Allow all origins during testing
+    "https://localhost:8000"
 ]
 
 logger.info(f"Configuring CORS with origins: {origins}")
@@ -45,8 +46,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=3600,
-    allow_origin_regex="https?://.*"  # Allow any HTTP/HTTPS origin during testing
+    max_age=3600
 )
 
 # Include WebSocket router first (without prefix)
