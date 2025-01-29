@@ -14,7 +14,10 @@ from sqlalchemy import func, text
 import logging
 from datetime import datetime, timedelta
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["marketplace"]
+)
 logger = logging.getLogger(__name__)
 
 @router.get("/status")
