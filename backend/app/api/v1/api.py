@@ -4,13 +4,14 @@ from datetime import datetime, timedelta
 from typing import List, Literal, Optional, Dict, Any
 import re
 import logging
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_current_admin
 from app.schemas.user import User
 from app.core.security import create_access_token
 from app.api.v1.endpoints import (
     auth, payments, betting_codes, admin_dashboard, admin_auth,
-    admin_statistics, admin_betting, admin_users,
-    admin_verifications, admin_payments, code_analyzer, marketplace
+    admin_statistics, notifications, admin_betting, admin_users,
+    admin_verifications, admin_payments, code_analyzer, marketplace,
+    code_analyzer_auth
 )
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -53,19 +54,20 @@ api_router.include_router(
     prefix="/admin/verifications",
     tags=["admin"]
 )
-6
+
 # Include the admin payments router
 api_router.include_router(
     admin_payments.router,
     prefix="/admin/payments",
-    tags=["admin"]
+    tags=["admin"],
+    dependencies=[Depends(get_current_admin)]
 )
 
-# Include the marketplace router
+# Include the notifications router
 api_router.include_router(
-    marketplace.router,
-    prefix="/marketplace",
-    tags=["marketplace"]
+    notifications.router,
+    prefix="/notifications",
+    tags=["notifications"]
 )
 
 # Include the code analyzer router
@@ -73,6 +75,19 @@ api_router.include_router(
     code_analyzer.router,
     prefix="/code-analyzer",
     tags=["code-analyzer"]
+)
+
+# Include the marketplace router
+api_router.include_router(
+    marketplace.router,
+    tags=["marketplace"]
+)
+
+# Include the code analyzer auth router
+api_router.include_router(
+    code_analyzer_auth.router,
+    prefix="/code-analyzer/auth",
+    tags=["code-analyzer-auth"]
 )
 
 # Create models for our requests
