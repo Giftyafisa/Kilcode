@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Dict
 from sqlalchemy.orm import Session
 from app.db.admin_session import get_admin_db
+from app.db.session import get_db
 from app.models.betting_code import BettingCode
 from app.models.code_view import CodeView
 from app.models.code_purchase import CodePurchase
@@ -38,7 +39,7 @@ async def get_marketplace_codes(
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=100),
     sort_by: str = Query("popularity", regex="^(popularity|date|price)$"),
-    db: Session = Depends(get_admin_db)
+    db: Session = Depends(get_db)
 ):
     """Get betting codes available in the marketplace for a specific country. This is a public endpoint."""
     try:
