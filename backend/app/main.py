@@ -7,6 +7,7 @@ from app.api.v1.websocket import router as websocket_router
 from app.core.database import init_db, engine, Base
 from app.db.base import Base
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,7 +17,8 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs" if settings.ENVIRONMENT == "development" else None
+    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
+    debug=True
 )
 
 # Update CORS middleware configuration
@@ -52,6 +54,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def cors_middleware(request: Request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url}")
     if request.method == "OPTIONS":
         response = JSONResponse(content={})
         origin = request.headers.get("Origin")
@@ -67,6 +70,7 @@ async def cors_middleware(request: Request, call_next):
     if origin in origins:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
+    logger.info(f"Response status: {response.status_code}")
     return response
 
 # Include WebSocket router first (without prefix)
@@ -95,7 +99,9 @@ async def startup_event():
 async def health_check():
     return {
         "status": "healthy",
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "user_id": None,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 @app.get("/api/v1/health")
@@ -104,4 +110,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True) 
