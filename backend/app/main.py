@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.api.v1.websocket import router as websocket_router
@@ -35,7 +36,7 @@ origins = [
     "http://localhost",
     "http://localhost:8000",
     "https://localhost:8000"
-]
+] + settings.CORS_ORIGINS
 
 logger.info(f"Configuring CORS with origins: {origins}")
 
@@ -48,6 +49,25 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600
 )
+
+@app.middleware("http")
+async def cors_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        response = JSONResponse(content={})
+        origin = request.headers.get("Origin")
+        if origin in origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Max-Age"] = "3600"
+        return response
+    response = await call_next(request)
+    origin = request.headers.get("Origin")
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 # Include WebSocket router first (without prefix)
 logger.info("Registering WebSocket routes")
