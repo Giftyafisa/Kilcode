@@ -85,6 +85,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 async def startup_event():
     logger.info("Application starting up...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"API prefix: {settings.API_V1_STR}")
     
     # Initialize database on startup
     try:
