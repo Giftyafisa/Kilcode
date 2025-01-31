@@ -15,7 +15,6 @@ import logging
 from datetime import datetime, timedelta
 
 router = APIRouter(
-    prefix="/marketplace",
     tags=["marketplace"]
 )
 logger = logging.getLogger(__name__)
