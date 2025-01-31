@@ -80,7 +80,9 @@ api_router.include_router(
 # Include the marketplace router
 api_router.include_router(
     marketplace.router,
-    tags=["marketplace"]
+    prefix="/marketplace",
+    tags=["marketplace"],
+    responses={404: {"description": "Not found"}}
 )
 
 # Include the code analyzer auth router
